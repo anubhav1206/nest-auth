@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { HomeResponseDto } from './home.dto';
 import { PropertyType } from '@prisma/client';
+import { UserInfo } from 'src/user/decorators/user.decorator';
 
 interface GetHomesParams {
   city?: string;
@@ -73,16 +74,19 @@ export class HomeService {
     return new HomeResponseDto(home);
   }
 
-  async createHome({
-    address,
-    numberOfBathrooms,
-    numberOfBedrooms,
-    city,
-    images,
-    landSize,
-    price,
-    propertyType,
-  }: CreateHomeParams): Promise<HomeResponseDto> {
+  async createHome(
+    {
+      address,
+      numberOfBathrooms,
+      numberOfBedrooms,
+      city,
+      images,
+      landSize,
+      price,
+      propertyType,
+    }: CreateHomeParams,
+    realtor_id: number,
+  ): Promise<HomeResponseDto> {
     const home = await this.prismaService.home.create({
       data: {
         address,
@@ -92,7 +96,7 @@ export class HomeService {
         land_size: landSize,
         property_type: propertyType,
         price,
-        realtor_id: 5,
+        realtor_id,
       },
     });
     const homeImages = images.map((image) => {
@@ -126,10 +130,51 @@ export class HomeService {
     return new HomeResponseDto(updatedHome);
   }
 
-  async deleteHomeById(id: number): Promise<void> {
+  async deleteHomeById(id: number) {
     await this.prismaService.home.delete({
       where: {
         id,
+      },
+    });
+  }
+
+  async getRealtorByHomeId(id: number) {
+    const home = await this.prismaService.home.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        realtor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!home) throw new NotFoundException();
+    return home.realtor;
+  }
+
+  async inquire(buyer: UserInfo, homeId, message) {
+    const realtor = await this.getRealtorByHomeId(homeId);
+    return await this.prismaService.message.create({
+      data: {
+        realtor_id: realtor.id,
+        buyer_id: buyer.id,
+        home_id: homeId,
+        message,
+      },
+    });
+  }
+
+  async getMessagesByHome(id: number) {
+    return await this.prismaService.message.findMany({
+      where: {
+        home_id: id,
       },
     });
   }
