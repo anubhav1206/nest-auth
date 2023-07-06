@@ -12,7 +12,7 @@ This repo is used for testing backend auth services with Nest.js
 
 - Use the imperative mood when writing description.
 - Keep description concise.
-- Start with a prefix: build, chore, ci, docs, style, refactor, perf, test.
+- Start with a prefix: build, feat, chore, docs, style, refactor, perf, test.
 - Reference relevant issues or tickets: "Closes issue #456".
 - Use proper grammar and punctuation.
 
