@@ -3,17 +3,17 @@ import { HomeController } from './home.controller';
 import { HomeService } from './home.service';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ClassSerializerInterceptor } from '@nestjs/common';
-import { PrismaModule } from './../prisma/prisma.module';
+import { PrismaService } from './../prisma/prisma.service';
 
 describe('HomeController', () => {
   let controller: HomeController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule],
       controllers: [HomeController],
       providers: [
         HomeService,
+        PrismaService,
         {
           provide: APP_INTERCEPTOR,
           useClass: ClassSerializerInterceptor,
