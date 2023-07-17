@@ -2,8 +2,30 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HomeController } from './home.controller';
 import { HomeService } from './home.service';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ClassSerializerInterceptor } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from './../prisma/prisma.service';
+import { PropertyType } from '@prisma/client';
+
+const mockUser = {
+  id: 54,
+  name: 'Marko',
+  email: 'anicmarko9@gmail.com',
+  phone: '555 555 5555',
+};
+
+const mockHome = {
+  id: 1,
+  address: '2345 William Str',
+  city: '2Toronto',
+  price: 1500000,
+  property_type: PropertyType.RESIDENTIAL,
+  image: 'img1',
+  number_of_bedrooms: 3,
+  number_of_bathrooms: 2.5,
+};
 
 describe('HomeController', () => {
   let controller: HomeController;
@@ -17,6 +39,8 @@ describe('HomeController', () => {
           provide: HomeService,
           useValue: {
             getHomes: jest.fn().mockReturnValue([]),
+            getRealtorByHomeId: jest.fn().mockReturnValue(mockUser),
+            updateHomeById: jest.fn().mockReturnValue(mockHome),
           },
         },
         PrismaService,
@@ -50,6 +74,29 @@ describe('HomeController', () => {
           gte: 1500000,
         },
       });
+    });
+  });
+
+  describe('updateHome', () => {
+    const mockUserInfo = {
+      id: 30,
+      name: 'Marko',
+      iat: 1,
+      exp: 2,
+    };
+    const mockCreateHomeParams = {
+      address: '111 Yellow Str',
+      city: 'Vancouver',
+      price: 1250000,
+      propertyType: PropertyType.RESIDENTIAL,
+      landSize: 4444,
+      numberOfBedrooms: 2,
+      numberOfBathrooms: 2,
+    };
+    it('should throw an unauthorized error if realtor did not create home', async () => {
+      await expect(
+        controller.updateHome(5, mockCreateHomeParams, mockUserInfo),
+      ).rejects.toThrowError(UnauthorizedException);
     });
   });
 });
