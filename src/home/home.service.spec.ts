@@ -11,15 +11,37 @@ const mockGetHomes = [
     address: '2345 William Str',
     city: '2Toronto',
     price: 1500000,
-    propertyType: PropertyType.RESIDENTIAL,
+    property_type: PropertyType.RESIDENTIAL,
     image: 'img1',
-    numberOfBedrooms: 3,
-    numberOfBathrooms: 2.5,
+    number_of_bedrooms: 3,
+    number_of_bathrooms: 2.5,
     images: [
       {
         url: 'src1',
       },
     ],
+  },
+];
+
+const mockHome = {
+  id: 1,
+  address: '2345 William Str',
+  city: '2Toronto',
+  price: 1500000,
+  property_type: PropertyType.RESIDENTIAL,
+  image: 'img1',
+  number_of_bedrooms: 3,
+  number_of_bathrooms: 2.5,
+};
+
+const mockImages = [
+  {
+    id: 1,
+    url: 'src1',
+  },
+  {
+    id: 2,
+    url: 'src2',
   },
 ];
 
@@ -33,9 +55,14 @@ describe('HomeService', () => {
         HomeService,
         {
           provide: PrismaService,
+          // doesn't actually query database
           useValue: {
             home: {
               findMany: jest.fn().mockReturnValue(mockGetHomes),
+              create: jest.fn().mockReturnValue(mockHome),
+            },
+            image: {
+              createMany: jest.fn().mockReturnValue(mockImages),
             },
           },
         },
@@ -79,7 +106,7 @@ describe('HomeService', () => {
       await service.getHomes(filters);
       // service is intercepted, and mockPrismaFindManyHomes() is called
 
-      // expect to be called like this:
+      // expect to be called with arguments from an actual service
       expect(mockPrismaFindManyHomes).toBeCalledWith({
         select: {
           id: true,
@@ -115,6 +142,64 @@ describe('HomeService', () => {
         NotFoundException,
       );
       // service is intercepted, and mockPrismaFindManyHomes() is called
+    });
+  });
+
+  describe('createHome', () => {
+    const mockCreateHomeParams = {
+      address: '111 Yellow Str',
+      city: 'Vancouver',
+      price: 1250000,
+      propertyType: PropertyType.RESIDENTIAL,
+      landSize: 4444,
+      numberOfBedrooms: 2,
+      numberOfBathrooms: 2,
+      images: [
+        {
+          url: 'src1',
+        },
+      ],
+    };
+    it('should call prisma home.create with the correct payload', async () => {
+      const mockCreateHome = jest.fn().mockReturnValue(mockHome);
+
+      jest
+        .spyOn(prismaService.home, 'create')
+        .mockImplementation(mockCreateHome);
+
+      await service.createHome(mockCreateHomeParams, 5);
+
+      expect(mockCreateHome).toBeCalledWith({
+        data: {
+          address: '111 Yellow Str',
+          city: 'Vancouver',
+          price: 1250000,
+          property_type: PropertyType.RESIDENTIAL,
+          land_size: 4444,
+          number_of_bedrooms: 2,
+          number_of_bathrooms: 2,
+          realtor_id: 5,
+        },
+      });
+    });
+
+    it('should call prisma image.createMany with correct payload', async () => {
+      const mockCreateManyImages = jest.fn().mockReturnValue(mockImages);
+
+      jest
+        .spyOn(prismaService.image, 'createMany')
+        .mockImplementation(mockCreateManyImages);
+
+      await service.createHome(mockCreateHomeParams, 5);
+
+      expect(mockCreateManyImages).toBeCalledWith({
+        data: [
+          {
+            home_id: 1,
+            url: 'src1',
+          },
+        ],
+      });
     });
   });
 });
