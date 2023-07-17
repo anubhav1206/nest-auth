@@ -70,9 +70,19 @@ export class HomeService {
       where: {
         id,
       },
+      select: {
+        realtor: {
+          select: {
+            name: true,
+            id: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
     });
     if (!home) throw new NotFoundException();
-    return new HomeResponseDto(home);
+    return new HomeResponseDto(home.realtor);
   }
 
   async createHome(
